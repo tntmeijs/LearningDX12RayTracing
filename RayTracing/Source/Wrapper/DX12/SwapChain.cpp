@@ -60,6 +60,11 @@ const UINT tnt::wrapper::dx12::SwapChain::GetBackBufferCount() const
 	return m_back_buffer_count;
 }
 
+const UINT tnt::wrapper::dx12::SwapChain::GetCurrentBackBufferIndex() const
+{
+	return m_swap_chain->GetCurrentBackBufferIndex();
+}
+
 DXGI_SWAP_CHAIN_DESC1 tnt::wrapper::dx12::SwapChain::CreateSwapChainDescription(
 	UINT t_number_of_buffers,
 	UINT t_width,

@@ -33,6 +33,7 @@ namespace tnt
 				IDXGISwapChain3* const GetSwapChainPointer() const;
 
 				const UINT GetBackBufferCount() const;
+				const UINT GetCurrentBackBufferIndex() const;
 
 			private:
 				DXGI_SWAP_CHAIN_DESC1 CreateSwapChainDescription(
