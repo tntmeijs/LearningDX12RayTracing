@@ -10,10 +10,15 @@ tnt::wrapper::dx12::Device::~Device()
 {
 }
 
-void tnt::wrapper::dx12::Device::Initialize(D3D_FEATURE_LEVEL t_desired_feature_level, BOOL t_use_warp_adapter, BOOL t_enable_debug_layer, UINT t_flags)
+void tnt::wrapper::dx12::Device::Initialize(
+	IDXGIFactory4* t_factory,
+	D3D_FEATURE_LEVEL t_desired_feature_level,
+	BOOL t_use_warp_adapter,
+	BOOL t_enable_debug_layer,
+	UINT t_flags)
 {
 	SetDebugLayer(t_enable_debug_layer);
-	SetDeviceAdapter(t_use_warp_adapter, t_desired_feature_level);
+	SetDeviceAdapter(t_factory, t_use_warp_adapter, t_desired_feature_level);
 }
 
 ID3D12Device* const tnt::wrapper::dx12::Device::GetDevicePointer() const
@@ -39,18 +44,15 @@ void tnt::wrapper::dx12::Device::EnableDebugLayer() const
 	}
 }
 
-void tnt::wrapper::dx12::Device::SetDeviceAdapter(BOOL t_use_warp_adapter, D3D_FEATURE_LEVEL t_desired_feature_level, UINT t_flags)
+void tnt::wrapper::dx12::Device::SetDeviceAdapter(IDXGIFactory4* t_factory, BOOL t_use_warp_adapter, D3D_FEATURE_LEVEL t_desired_feature_level, UINT t_flags)
 {
-	Microsoft::WRL::ComPtr<IDXGIFactory4> factory;
-	ThrowIfFailed(CreateDXGIFactory2(t_flags, IID_PPV_ARGS(&factory)));
-
 	if (t_use_warp_adapter)
 	{
-		CreateDeviceUsingWarpAdapter(factory.Get(), t_desired_feature_level);
+		CreateDeviceUsingWarpAdapter(t_factory, t_desired_feature_level);
 	}
 	else
 	{
-		CreateDeviceUsingHardwareAdapter(factory.Get(), t_desired_feature_level);
+		CreateDeviceUsingHardwareAdapter(t_factory, t_desired_feature_level);
 	}
 }
 
