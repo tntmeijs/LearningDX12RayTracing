@@ -14,6 +14,7 @@ using namespace DirectX;
 #include "Wrapper/Window.hpp"
 #include "Wrapper/DX12/Device.hpp"
 #include "Wrapper/DX12/SwapChain.hpp"
+#include "Wrapper/DX12/DescriptorHeap.hpp"
 
 // Need the ComPtr<t> for this application
 #include <wrl.h>
@@ -63,8 +64,9 @@ CD3DX12_RECT scissorRect(0, 0, static_cast<LONG>(WINDOW_WIDTH), static_cast<LONG
 
 D3D12_VERTEX_BUFFER_VIEW vertexBufferView = {};
 
-ComPtr<ID3D12DescriptorHeap> rtvHeap;
-ComPtr<ID3D12DescriptorHeap> cbvSrvHeap;
+tnt::wrapper::dx12::DescriptorHeap rtvHeap;
+tnt::wrapper::dx12::DescriptorHeap cbvSrvHeap;
+
 ComPtr<ID3D12Resource> renderTargets[BACK_BUFFER_COUNT];
 ComPtr<ID3D12CommandQueue> graphicsCommandQueue;
 ComPtr<ID3D12CommandAllocator> graphicsCommandAllocators[BACK_BUFFER_COUNT];
@@ -118,9 +120,9 @@ void PopulateCommandList()
 	ThrowIfFailed(graphicsCommandList->Reset(graphicsCommandAllocators[frameIndex].Get(), graphicsPipelineStateObject.Get()));
 
 	// All descriptor heaps needed for the graphics command list
-	ID3D12DescriptorHeap* ppDescriptorheaps[] = { cbvSrvHeap.Get() };
+	ID3D12DescriptorHeap* ppDescriptorheaps[] = { cbvSrvHeap.GetDescriptorHeapPointer() };
 
-	CD3DX12_GPU_DESCRIPTOR_HANDLE cbvSrvHeapHandle(cbvSrvHeap->GetGPUDescriptorHandleForHeapStart());
+	CD3DX12_GPU_DESCRIPTOR_HANDLE cbvSrvHeapHandle(cbvSrvHeap.GetDescriptorHeapPointer()->GetGPUDescriptorHandleForHeapStart());
 
 	// Set the correct states
 	graphicsCommandList->SetGraphicsRootSignature(rootSignature.Get());
@@ -144,7 +146,7 @@ void PopulateCommandList()
 	);
 
 	// Handle to the current back buffer of the swap chain
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap.GetDescriptorHeapPointer()->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize);
 
 	// Set the current back buffer as the render target
 	graphicsCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
@@ -217,20 +219,17 @@ void Initialize()
 		// === DESCRIPTOR HEAPS ===
 		// === ================ ===
 		{
-			// Create the render target view descriptor heap
-			D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-			rtvHeapDesc.NumDescriptors = BACK_BUFFER_COUNT;
-			rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-			rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+			rtvHeap.Initialize(
+				device_pointer,
+				BACK_BUFFER_COUNT,
+				D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+				D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
-			// Create the shader resource view descriptor heap for the texture
-			D3D12_DESCRIPTOR_HEAP_DESC cbvSrvHeapDesc = {};
-			cbvSrvHeapDesc.NumDescriptors = 2;
-			cbvSrvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-			cbvSrvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-			ThrowIfFailed(device_pointer->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap)));
-			ThrowIfFailed(device_pointer->CreateDescriptorHeap(&cbvSrvHeapDesc, IID_PPV_ARGS(&cbvSrvHeap)));
+			cbvSrvHeap.Initialize(
+				device_pointer,
+				2,
+				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+				D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
 			rtvDescriptorSize = device_pointer->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 			cbvSrvDescriptorSize = device_pointer->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -240,7 +239,7 @@ void Initialize()
 		// === FRAME RESOURCES ===
 		// === =============== ===
 		{
-			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart());
+			CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap.GetDescriptorHeapPointer()->GetCPUDescriptorHandleForHeapStart());
 
 			// Create a new render target view for each frame
 			for (UINT n = 0; n < BACK_BUFFER_COUNT; ++n)
@@ -394,7 +393,7 @@ void Initialize()
 		}
 
 		// Pointer to the start of the CBV / SRV heap
-		CD3DX12_CPU_DESCRIPTOR_HANDLE cbvSrvHandle(cbvSrvHeap->GetCPUDescriptorHandleForHeapStart());
+		CD3DX12_CPU_DESCRIPTOR_HANDLE cbvSrvHandle(cbvSrvHeap.GetDescriptorHeapPointer()->GetCPUDescriptorHandleForHeapStart());
 
 		// === ======== ===
 		// === TEXTURES ===
