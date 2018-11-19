@@ -11,6 +11,9 @@ namespace tnt
 			Renderer();
 			~Renderer();
 
+			void Initialize();
+			void Cleanup();
+
 		private:
 		};
 	}
