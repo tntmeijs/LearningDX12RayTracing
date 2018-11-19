@@ -17,6 +17,7 @@ namespace tnt
 				template<typename Functor>
 				void Create(HINSTANCE t_hinstance, UINT t_width, UINT t_height, Functor t_window_proc);
 				void Show() const;
+				void MainLoop();
 	
 				HWND GetWindowHandle() const;
 	
