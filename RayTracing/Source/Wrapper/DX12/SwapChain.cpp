@@ -49,6 +49,11 @@ void tnt::wrapper::dx12::SwapChain::Initialize(
 	m_frame_index = m_swap_chain->GetCurrentBackBufferIndex();
 }
 
+IDXGISwapChain3* const tnt::wrapper::dx12::SwapChain::GetSwapChainPointer() const
+{
+	return m_swap_chain.Get();
+}
+
 DXGI_SWAP_CHAIN_DESC1 tnt::wrapper::dx12::SwapChain::CreateSwapChainDescription(
 	UINT t_number_of_buffers,
 	UINT t_width,

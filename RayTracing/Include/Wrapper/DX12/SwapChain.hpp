@@ -30,6 +30,8 @@ namespace tnt
 					DXGI_FORMAT t_format = DXGI_FORMAT_R8G8B8A8_UNORM,
 					DXGI_SWAP_EFFECT t_swap_effect = DXGI_SWAP_EFFECT_FLIP_DISCARD);
 
+				IDXGISwapChain3* const GetSwapChainPointer() const;
+
 			private:
 				DXGI_SWAP_CHAIN_DESC1 CreateSwapChainDescription(
 					UINT t_number_of_buffers,
