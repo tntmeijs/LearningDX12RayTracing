@@ -16,6 +16,11 @@ void tnt::wrapper::dx12::Device::Initialize(D3D_FEATURE_LEVEL t_desired_feature_
 	SetDeviceAdapter(t_use_warp_adapter, t_desired_feature_level);
 }
 
+ID3D12Device* const tnt::wrapper::dx12::Device::GetDevicePointer() const
+{
+	return m_device.Get();
+}
+
 void tnt::wrapper::dx12::Device::SetDebugLayer(BOOL t_enable_debug_layer) const
 {
 	if (t_enable_debug_layer)

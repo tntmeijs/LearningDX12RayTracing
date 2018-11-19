@@ -24,6 +24,8 @@ namespace tnt
 					BOOL t_enable_debug_layer = FALSE,
 					UINT t_flags = 0);
 
+				ID3D12Device* const GetDevicePointer() const;
+
 			private:
 				void SetDebugLayer(BOOL t_enable_debug_layer) const;
 				void EnableDebugLayer() const;
