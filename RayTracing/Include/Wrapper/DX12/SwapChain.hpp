@@ -26,11 +26,13 @@ namespace tnt
 					UINT t_height,
 					const DXGI_SAMPLE_DESC& t_sampler_description,
 					BOOL t_allow_alt_enter = FALSE,
-					UINT t_number_of_buffers = 2,
+					UINT t_number_of_back_buffers = 2,
 					DXGI_FORMAT t_format = DXGI_FORMAT_R8G8B8A8_UNORM,
 					DXGI_SWAP_EFFECT t_swap_effect = DXGI_SWAP_EFFECT_FLIP_DISCARD);
 
 				IDXGISwapChain3* const GetSwapChainPointer() const;
+
+				const UINT GetBackBufferCount() const;
 
 			private:
 				DXGI_SWAP_CHAIN_DESC1 CreateSwapChainDescription(
@@ -42,9 +44,9 @@ namespace tnt
 					const DXGI_SAMPLE_DESC& t_sampler_description);
 
 			private:
-				UINT m_frame_index;
-
 				Microsoft::WRL::ComPtr<IDXGISwapChain3> m_swap_chain;
+
+				UINT m_back_buffer_count;
 			};
 		}
 	}

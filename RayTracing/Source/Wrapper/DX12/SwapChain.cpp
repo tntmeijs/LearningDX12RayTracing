@@ -3,7 +3,7 @@
 #include "Utility/CheckHResult.hpp"
 
 tnt::wrapper::dx12::SwapChain::SwapChain()
-	: m_frame_index(0)
+	: m_back_buffer_count(0)
 {
 }
 
@@ -19,12 +19,14 @@ void tnt::wrapper::dx12::SwapChain::Initialize(
 	UINT t_height,
 	const DXGI_SAMPLE_DESC& t_sampler_description,
 	BOOL t_allow_alt_enter,
-	UINT t_number_of_buffers,
+	UINT t_number_of_back_buffers,
 	DXGI_FORMAT t_format,
 	DXGI_SWAP_EFFECT t_swap_effect)
 {
+	m_back_buffer_count = t_number_of_back_buffers;
+
 	DXGI_SWAP_CHAIN_DESC1 swap_chain_desc = CreateSwapChainDescription(
-		t_number_of_buffers,
+		t_number_of_back_buffers,
 		t_width,
 		t_height,
 		t_format,
@@ -46,12 +48,16 @@ void tnt::wrapper::dx12::SwapChain::Initialize(
 	}
 
 	ThrowIfFailed(swap_chain_one.As(&m_swap_chain));
-	m_frame_index = m_swap_chain->GetCurrentBackBufferIndex();
 }
 
 IDXGISwapChain3* const tnt::wrapper::dx12::SwapChain::GetSwapChainPointer() const
 {
 	return m_swap_chain.Get();
+}
+
+const UINT tnt::wrapper::dx12::SwapChain::GetBackBufferCount() const
+{
+	return m_back_buffer_count;
 }
 
 DXGI_SWAP_CHAIN_DESC1 tnt::wrapper::dx12::SwapChain::CreateSwapChainDescription(
