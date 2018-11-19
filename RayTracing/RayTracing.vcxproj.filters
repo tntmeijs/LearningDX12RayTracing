@@ -24,10 +24,10 @@
     <ClCompile Include="Source\Wrapper\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\Renderer.cpp">
+    <ClCompile Include="Source\Wrapper\DX12\Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Wrapper\DX12\Device.cpp">
+    <ClCompile Include="Source\Wrapper\DX12\SwapChain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,10 +38,10 @@
     <ClInclude Include="Include\Wrapper\Window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Renderer\Renderer.hpp">
+    <ClInclude Include="Include\Wrapper\DX12\Device.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Wrapper\DX12\Device.hpp">
+    <ClInclude Include="Include\Wrapper\DX12\SwapChain.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
