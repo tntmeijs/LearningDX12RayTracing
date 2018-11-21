@@ -36,7 +36,13 @@ struct SceneConstantBufferData
 	XMFLOAT2 positionOffset;
 };
 
+struct ModelConstantBufferData
+{
+	XMFLOAT2 testData;
+};
+
 SceneConstantBufferData constantBufferData;
+ModelConstantBufferData modelConstantBufferData;
 
 HWND window_handle = nullptr;
 
@@ -51,6 +57,7 @@ UINT rtvDescriptorSize = 0;
 UINT cbvSrvDescriptorSize = 0;
 
 UINT8* p_cbvDataBegin = nullptr;
+UINT8* p_modelDataBegin = nullptr;
 
 UINT64 fenceValues[BACK_BUFFER_COUNT] = {};
 
@@ -79,6 +86,7 @@ ComPtr<ID3D12RootSignature> rootSignature;
 ComPtr<ID3D12Resource> vertexBuffer;
 ComPtr<ID3D12Resource> texture;
 ComPtr<ID3D12Resource> constantBuffer;
+ComPtr<ID3D12Resource> modelConstantBuffer;
 
 void WaitForGPU()
 {
@@ -132,6 +140,11 @@ void PopulateCommandList()
 	cbvSrvHeapHandle.Offset(1, cbvSrvDescriptorSize);
 
 	graphicsCommandList->SetGraphicsRootDescriptorTable(1, cbvSrvHeapHandle);
+
+	cbvSrvHeapHandle.Offset(1, cbvSrvDescriptorSize);
+
+	graphicsCommandList->SetGraphicsRootDescriptorTable(2, cbvSrvHeapHandle);
+
 	graphicsCommandList->RSSetViewports(1, &viewport);
 	graphicsCommandList->RSSetScissorRects(1, &scissorRect);
 
@@ -227,7 +240,7 @@ void Initialize()
 
 			cbvSrvHeap.Initialize(
 				device_pointer,
-				2,
+				3,
 				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 				D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
@@ -273,13 +286,15 @@ void Initialize()
 				featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 			}
 
-			CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
+			CD3DX12_DESCRIPTOR_RANGE1 ranges[3];
 			ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 			ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+			ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-			CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+			CD3DX12_ROOT_PARAMETER1 rootParameters[3];
 			rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
 			rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_VERTEX);
+			rootParameters[2].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_PIXEL);
 
 			D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
 				D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
@@ -471,7 +486,7 @@ void Initialize()
 		ID3D12CommandList* ppCommandLists[] = { graphicsCommandList.Get() };
 		graphicsCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-		// Create the constant buffer
+		// Create the scene constant buffer
 		{
 			ThrowIfFailed(device_pointer->CreateCommittedResource(
 				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -494,6 +509,28 @@ void Initialize()
 			CD3DX12_RANGE readRange(0, 0);
 			ThrowIfFailed(constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&p_cbvDataBegin)));
 			memcpy(p_cbvDataBegin, &constantBufferData, sizeof(constantBufferData));
+		}
+
+		// Create the model constant buffer
+		{
+			ThrowIfFailed(device_pointer->CreateCommittedResource(
+				&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+				D3D12_HEAP_FLAG_NONE,
+				&CD3DX12_RESOURCE_DESC::Buffer(1024 * 64),
+				D3D12_RESOURCE_STATE_GENERIC_READ,
+				nullptr,
+				IID_PPV_ARGS(&modelConstantBuffer)));
+
+			D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+			cbvDesc.BufferLocation = modelConstantBuffer->GetGPUVirtualAddress();
+			cbvDesc.SizeInBytes = (sizeof(ModelConstantBufferData) + 255) & ~255;
+
+			device_pointer->CreateConstantBufferView(&cbvDesc, cbvSrvHandle);	// Resource 2
+			cbvSrvHandle.Offset(1, cbvSrvDescriptorSize);
+
+			CD3DX12_RANGE readRange(0, 0);
+			ThrowIfFailed(modelConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&p_modelDataBegin)));
+			memcpy(p_modelDataBegin, &modelConstantBufferData, sizeof(modelConstantBuffer));
 		}
 
 		// Create and record the bundle
@@ -548,6 +585,14 @@ void Update()
 
 	// Update the data in the constant buffer
 	memcpy(p_cbvDataBegin, &constantBufferData, sizeof(constantBufferData));
+
+	static float value = 0.0f;
+	modelConstantBufferData.testData.x = sin(value);
+	modelConstantBufferData.testData.y = cos(value);
+
+	value += 0.01f;
+
+	memcpy(p_modelDataBegin, &modelConstantBufferData, sizeof(modelConstantBufferData));
 }
 
 void Render()

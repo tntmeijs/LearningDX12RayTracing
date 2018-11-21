@@ -6,6 +6,11 @@ cbuffer SceneConstantBuffer : register(b0)
 	float2 positionOffset;
 };
 
+cbuffer ModelConstantBuffer : register(b1)
+{
+	float2 test;
+};
+
 struct VSOutput
 {
 	float4 position : SV_POSITION;
@@ -24,5 +29,6 @@ VSOutput vs_main(float4 position : POSITION, float2 uv : TEXCOORD)
 
 float4 ps_main(VSOutput input) : SV_TARGET
 {
-	return g_texture.Sample(g_sampler, input.uv);
+	float4 textureColor = g_texture.Sample(g_sampler, input.uv);
+	return textureColor + float4(0.0, test.x, test.y, 0.0);
 }
