@@ -3,6 +3,8 @@
 using namespace DirectX::SimpleMath;
 
 tnt::graphics::Camera::Camera()
+	: m_position(0.0f, 0.0f, -1.0f)
+	, m_target(0.0f, 0.0f, 0.0f)
 {
 	SetProjection(85.0f, 16.0f / 9.0f, 0.1f, 1000.0f);
 }
@@ -56,9 +58,6 @@ const DirectX::SimpleMath::Vector3 & tnt::graphics::Camera::GetTarget() const
 
 void tnt::graphics::Camera::CreateViewProjectionMatrix(DirectX::SimpleMath::Matrix& result) const
 {
-	Matrix view_matrix;
-
-	view_matrix.CreateLookAt(m_position, m_target, Vector3(0.0f, 1.0f, 0.0f));
-
+	Matrix view_matrix = Matrix::CreateLookAt(m_position, m_target, Vector3(0.0f, 1.0f, 0.0f));
 	result = view_matrix * m_projection_matrix;
 }

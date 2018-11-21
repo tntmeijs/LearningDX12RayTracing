@@ -1,6 +1,7 @@
 #ifndef CAMERA_HPP
 #define CAMERA_HPP
 
+#include <d3d12.h>
 #include <SimpleMath.h>
 
 namespace tnt
