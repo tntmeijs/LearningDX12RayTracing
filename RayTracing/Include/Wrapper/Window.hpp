@@ -15,7 +15,7 @@ namespace tnt
 				~Window();
 	
 				template<typename Functor>
-				void Create(HINSTANCE t_hinstance, UINT t_width, UINT t_height, Functor t_window_proc);
+				void Create(const WCHAR* t_window_title, HINSTANCE t_hinstance, UINT t_width, UINT t_height, Functor t_window_proc);
 				void Show() const;
 				void MainLoop();
 	
@@ -26,7 +26,7 @@ namespace tnt
 			};
 	
 			template<typename Functor>
-			inline void Window::Create(HINSTANCE t_hinstance, UINT t_width, UINT t_height, Functor t_window_proc)
+			inline void Window::Create(const WCHAR* t_window_title, HINSTANCE t_hinstance, UINT t_width, UINT t_height, Functor t_window_proc)
 			{
 				WNDCLASSEX window_class = { 0 };
 				window_class.cbSize = sizeof(WNDCLASSEX);
@@ -34,7 +34,7 @@ namespace tnt
 				window_class.lpfnWndProc = t_window_proc;
 				window_class.hInstance = t_hinstance;
 				window_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
-				window_class.lpszClassName = className;
+				window_class.lpszClassName = t_window_title;
 				RegisterClassEx(&window_class);
 	
 				RECT window_rect = { 0, 0, static_cast<LONG>(t_width), static_cast<LONG>(t_height) };
@@ -42,7 +42,7 @@ namespace tnt
 	
 				m_window_handle = CreateWindow(
 					window_class.lpszClassName,
-					windowTitle,
+					t_window_title,
 					WS_OVERLAPPEDWINDOW,
 					CW_USEDEFAULT,
 					CW_USEDEFAULT,
