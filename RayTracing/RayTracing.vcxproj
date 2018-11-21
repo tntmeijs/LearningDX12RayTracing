@@ -161,12 +161,14 @@
   <ItemGroup>
     <ClCompile Include="Libraries\stb\stb_image.cpp" />
     <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\Renderer\Renderer.cpp" />
     <ClCompile Include="Source\Wrapper\DX12\DescriptorHeap.cpp" />
     <ClCompile Include="Source\Wrapper\DX12\Device.cpp" />
     <ClCompile Include="Source\Wrapper\DX12\SwapChain.cpp" />
     <ClCompile Include="Source\Wrapper\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Renderer\Renderer.hpp" />
     <ClInclude Include="Include\Utility\CheckHResult.hpp" />
     <ClInclude Include="Include\Wrapper\DX12\DescriptorHeap.hpp" />
     <ClInclude Include="Include\Wrapper\DX12\Device.hpp" />
