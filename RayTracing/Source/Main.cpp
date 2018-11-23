@@ -146,8 +146,6 @@ void PopulateCommandList()
 
 	cbvSrvHeapHandle.Offset(1, cbvSrvDescriptorSize);
 
-	graphics_command_list->SetGraphicsRootDescriptorTable(2, cbvSrvHeapHandle);
-
 	graphics_command_list->RSSetViewports(1, &viewport);
 	graphics_command_list->RSSetScissorRects(1, &scissor_rect);
 
@@ -298,10 +296,9 @@ void Initialize()
 			ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 			ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 
-			CD3DX12_ROOT_PARAMETER1 rootParameters[3];
+			CD3DX12_ROOT_PARAMETER1 rootParameters[2];
 			rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
-			rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_VERTEX);
-			rootParameters[2].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_VERTEX);
+			rootParameters[1].InitAsDescriptorTable(2, &ranges[1], D3D12_SHADER_VISIBILITY_VERTEX);
 
 			D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
 				D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
