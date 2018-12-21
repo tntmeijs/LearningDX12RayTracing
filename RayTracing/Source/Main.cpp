@@ -76,6 +76,7 @@ D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view = {};
 
 tnt::wrapper::dx12::DescriptorHeap rtv_heap;
 tnt::wrapper::dx12::DescriptorHeap cbv_srv_heap;
+tnt::wrapper::dx12::DescriptorHeap ds_heap;
 
 ComPtr<ID3D12Resource> render_targets[BACK_BUFFER_COUNT];
 ComPtr<ID3D12CommandQueue> graphics_command_queue;
@@ -90,6 +91,7 @@ ComPtr<ID3D12Resource> vertex_buffer;
 ComPtr<ID3D12Resource> texture;
 ComPtr<ID3D12Resource> camera_constant_buffer;
 ComPtr<ID3D12Resource> model_constant_buffer;
+ComPtr<ID3D12Resource> depth_stencil_buffer;
 
 void WaitForGPU()
 {
@@ -161,13 +163,19 @@ void PopulateCommandList()
 
 	// Handle to the current back buffer of the swap chain
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtv_heap.GetDescriptorHeapPointer()->GetCPUDescriptorHandleForHeapStart(), frameIndex, rtvDescriptorSize);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE ds_handle(ds_heap.GetDescriptorHeapPointer()->GetCPUDescriptorHandleForHeapStart());
 
 	// Set the current back buffer as the render target
-	graphics_command_list->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-
-	// Record commands
+	graphics_command_list->OMSetRenderTargets(1, &rtvHandle, FALSE, &ds_handle);
+	
+	// Clear buffers before recording commands
 	graphics_command_list->ClearRenderTargetView(rtvHandle, BACK_BUFFER_CLEAR_COLOR, 0, nullptr);
+	graphics_command_list->ClearDepthStencilView(ds_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+	// === =============== ===
+	// === Record commands ===
+	// === =============== ===
+	
 	// Execute commands stored in the bundle
 	graphics_command_list->ExecuteBundle(bundle_command_list.Get());
 
@@ -248,6 +256,12 @@ void Initialize()
 				3,
 				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 				D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+
+			ds_heap.Initialize(
+				device_pointer,
+				1,
+				D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+				D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
 			rtvDescriptorSize = device_pointer->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 			cbvSrvDescriptorSize = device_pointer->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -361,8 +375,7 @@ void Initialize()
 			graphicsPipelineStateObjectDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
 			graphicsPipelineStateObjectDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 			graphicsPipelineStateObjectDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-			graphicsPipelineStateObjectDesc.DepthStencilState.DepthEnable = FALSE;
-			graphicsPipelineStateObjectDesc.DepthStencilState.StencilEnable = FALSE;
+			graphicsPipelineStateObjectDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 			graphicsPipelineStateObjectDesc.SampleMask = UINT_MAX;
 			graphicsPipelineStateObjectDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 			graphicsPipelineStateObjectDesc.NumRenderTargets = 1;
@@ -381,9 +394,26 @@ void Initialize()
 		{
 			Vertex vertices[] =
 			{
-				{ {  0.0f,  0.5f, 0.0f, 1.0f }, { 0.5f, 0.0f } },
-				{ {  0.5f, -0.5f, 0.0f, 1.0f }, { 1.0f, 1.0f } },
-				{ { -0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f } }
+				{ { -2.0f, -2.0f, -1.0f, 1.0f }, { 0.0f, 1.0f } },
+				{ {  2.0f, -2.0f, -1.0f, 1.0f }, { 1.0f, 1.0f } },
+				{ {  2.0f,  2.0f, -1.0f, 1.0f }, { 1.0f, 0.0f } },
+				{ { -2.0f, -2.0f, -1.0f, 1.0f }, { 0.0f, 1.0f } },
+				{ {  2.0f,  2.0f, -1.0f, 1.0f }, { 1.0f, 0.0f } },
+				{ { -2.0f,  2.0f, -1.0f, 1.0f }, { 0.0f, 0.0f } },
+
+				{ { -2.0f, -2.0f,  0.0f, 1.0f }, { 0.0f, 1.0f } },
+				{ {  2.0f, -2.0f,  0.0f, 1.0f }, { 1.0f, 1.0f } },
+				{ {  2.0f,  2.0f,  0.0f, 1.0f }, { 1.0f, 0.0f } },
+				{ { -2.0f, -2.0f,  0.0f, 1.0f }, { 0.0f, 1.0f } },
+				{ {  2.0f,  2.0f,  0.0f, 1.0f }, { 1.0f, 0.0f } },
+				{ { -2.0f,  2.0f,  0.0f, 1.0f }, { 0.0f, 0.0f } },
+
+				{ { -2.0f, -2.0f,  1.0f, 1.0f }, { 0.0f, 1.0f } },
+				{ {  2.0f, -2.0f,  1.0f, 1.0f }, { 1.0f, 1.0f } },
+				{ {  2.0f,  2.0f,  1.0f, 1.0f }, { 1.0f, 0.0f } },
+				{ { -2.0f, -2.0f,  1.0f, 1.0f }, { 0.0f, 1.0f } },
+				{ {  2.0f,  2.0f,  1.0f, 1.0f }, { 1.0f, 0.0f } },
+				{ { -2.0f,  2.0f,  1.0f, 1.0f }, { 0.0f, 0.0f } },
 			};
 
 			const UINT vertexBufferSize = sizeof(vertices);
@@ -485,6 +515,41 @@ void Initialize()
 			cbvSrvHandle.Offset(1, cbvSrvDescriptorSize);
 		}
 
+		// ======================== ===
+		// === Depth stencil buffer ===
+		// ======================== ===
+		D3D12_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc = {};
+		depth_stencil_view_desc.Format = DXGI_FORMAT_D32_FLOAT;
+		depth_stencil_view_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		depth_stencil_view_desc.Flags = D3D12_DSV_FLAG_NONE;
+
+		D3D12_CLEAR_VALUE depth_stencil_optimized_clear_value = {};
+		depth_stencil_optimized_clear_value.Format = DXGI_FORMAT_D32_FLOAT;
+		depth_stencil_optimized_clear_value.DepthStencil.Depth = 1.0f;
+		depth_stencil_optimized_clear_value.DepthStencil.Stencil = 0;
+
+		device_pointer->CreateCommittedResource(&
+			CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Tex2D(
+				DXGI_FORMAT_D32_FLOAT,
+				WINDOW_WIDTH,
+				WINDOW_HEIGHT,
+				1,
+				0,
+				1,
+				0,
+				D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			&depth_stencil_optimized_clear_value,
+			IID_PPV_ARGS(&depth_stencil_buffer));
+
+		// Create the actual depth stencil view
+		device_pointer->CreateDepthStencilView(
+			depth_stencil_buffer.Get(),
+			&depth_stencil_view_desc,
+			ds_heap.GetDescriptorHeapPointer()->GetCPUDescriptorHandleForHeapStart());
+
 		// Close the command list and execute the commands
 		ThrowIfFailed(graphics_command_list->Close());
 		ID3D12CommandList* ppCommandLists[] = { graphics_command_list.Get() };
@@ -550,7 +615,7 @@ void Initialize()
 			bundle_command_list->SetGraphicsRootSignature(root_signature.Get());
 			bundle_command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			bundle_command_list->IASetVertexBuffers(0, 1, &vertex_buffer_view);
-			bundle_command_list->DrawInstanced(3, 1, 0, 0);
+			bundle_command_list->DrawInstanced(18, 1, 0, 0);
 
 			ThrowIfFailed(bundle_command_list->Close());
 		}
@@ -577,11 +642,10 @@ void Initialize()
 
 void ModifyConstantBufferData()
 {
-	// A simple camera rotating around the object
-	static float counter = 0.0f;
-	counter += 0.05f;
+	static float t = 0.0f;
+	t += 0.01f;
 
-	camera.SetPosition(cos(counter), 0.0f, sin(counter));
+	camera.SetPosition(0.0f, sin(t) * 4.0f, -8.0f);
 	camera.CreateViewProjectionMatrix(camera_data.view_projection_matrix);
 }
 
